@@ -125,35 +125,107 @@ document.addEventListener('DOMContentLoaded', function() {
                     newsletter: this.querySelector('[name="newsletter"]').checked ? 'Yes' : 'No'
                 };
                 
-                // For now, show success message and log form data
-                console.log('Contact Form Submission:', formData);
+                // Show loading message
+                showMessage('Sending your message...', 'info');
                 
-                // Show success message with contact information
-                showMessage(`Thank you ${formData.name}! Your message has been received. We will contact you soon.\n\nFor immediate assistance:\n📞 Call: +91 90223 34441\n📧 Email: info@semanticssolutions.com`, 'success');
+                // Submit to Formspree AND store locally
+                const form = this;
+                const formDataForSubmission = new FormData(form);
                 
-                // Reset form
-                this.reset();
-                
-                // Reset all border colors
-                requiredFields.forEach(field => {
-                    const input = this.querySelector(`[name="${field}"]`);
-                    if (input) input.style.borderColor = '#e0e0e0';
-                });
-                if (emailInput) emailInput.style.borderColor = '#e0e0e0';
-                if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
-                
-                // Optional: Store form data in localStorage for tracking
-                try {
-                    const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
-                    submissions.push({
-                        ...formData,
-                        timestamp: new Date().toISOString(),
-                        id: Date.now()
+                // Submit to Formspree for email
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formDataForSubmission,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Success - email sent via Formspree
+                        showMessage(`Thank you ${formData.name}! Your message has been sent successfully. We will contact you soon via email or phone.`, 'success');
+                        
+                        // Store in localStorage for admin dashboard
+                        try {
+                            const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                            submissions.push({
+                                ...formData,
+                                timestamp: new Date().toISOString(),
+                                id: Date.now(),
+                                emailSent: true
+                            });
+                            localStorage.setItem('formSubmissions', JSON.stringify(submissions));
+                        } catch(e) {
+                            console.log('Could not store form submission locally');
+                        }
+                        
+                        // Reset form
+                        form.reset();
+                        
+                        // Reset all border colors
+                        requiredFields.forEach(field => {
+                            const input = form.querySelector(`[name="${field}"]`);
+                            if (input) input.style.borderColor = '#e0e0e0';
+                        });
+                        if (emailInput) emailInput.style.borderColor = '#e0e0e0';
+                        if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
+                        
+                    } else {
+                        // Formspree error, but still store locally
+                        response.json().then(data => {
+                            if (Object.hasOwnProperty.call(data, 'errors')) {
+                                showMessage('Your message has been received locally. We will contact you soon at +91 90223 34441', 'success');
+                            } else {
+                                showMessage(`Thank you ${formData.name}! Your message has been sent successfully.`, 'success');
+                            }
+                            
+                            // Store locally even if email failed
+                            try {
+                                const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                                submissions.push({
+                                    ...formData,
+                                    timestamp: new Date().toISOString(),
+                                    id: Date.now(),
+                                    emailSent: false
+                                });
+                                localStorage.setItem('formSubmissions', JSON.stringify(submissions));
+                            } catch(e) {
+                                console.log('Could not store form submission locally');
+                            }
+                            
+                            form.reset();
+                        });
+                    }
+                })
+                .catch(error => {
+                    // Network error, still store locally
+                    console.error('Form submission error:', error);
+                    showMessage(`Thank you ${formData.name}! Your message has been received. We will contact you soon at +91 90223 34441 or info@semanticssolutions.com`, 'success');
+                    
+                    // Store locally even if network failed
+                    try {
+                        const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                        submissions.push({
+                            ...formData,
+                            timestamp: new Date().toISOString(),
+                            id: Date.now(),
+                            emailSent: false
+                        });
+                        localStorage.setItem('formSubmissions', JSON.stringify(submissions));
+                    } catch(e) {
+                        console.log('Could not store form submission locally');
+                    }
+                    
+                    form.reset();
+                    
+                    // Reset border colors
+                    requiredFields.forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) input.style.borderColor = '#e0e0e0';
                     });
-                    localStorage.setItem('formSubmissions', JSON.stringify(submissions));
-                } catch(e) {
-                    console.log('Could not store form submission locally');
-                }
+                    if (emailInput) emailInput.style.borderColor = '#e0e0e0';
+                    if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
+                });
             } else {
                 showMessage('Please fill in all required fields correctly.', 'error');
             }

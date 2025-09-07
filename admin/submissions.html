@@ -252,6 +252,14 @@
                             <div class="detail-label">Timeline</div>
                             <div class="detail-value">${submission.timeline || 'Not specified'}</div>
                         </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email Status</div>
+                            <div class="detail-value">
+                                ${submission.emailSent === true ? '✅ Email Sent Successfully' : 
+                                  submission.emailSent === false ? '⚠️ Email Failed (Stored Locally)' : 
+                                  '📝 Local Storage Only'}
+                            </div>
+                        </div>
                         <div class="detail-item message-section">
                             <div class="detail-label">Message</div>
                             <div class="detail-value">${submission.message}</div>
