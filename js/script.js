@@ -65,15 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(card);
     });
 
-    // Form validation and submission
-    const contactForm = document.querySelector('.contact-form form');
+    // Form validation and submission with Formspree
+    const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
             
             // Basic validation
             let isValid = true;
@@ -81,14 +77,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             requiredFields.forEach(field => {
                 const input = this.querySelector(`[name="${field}"]`);
-                if (!input.value.trim()) {
+                if (!input || !input.value.trim()) {
                     isValid = false;
-                    input.style.borderColor = '#e74c3c';
-                    
-                    // Reset border color after 3 seconds
-                    setTimeout(() => {
-                        input.style.borderColor = '#e0e0e0';
-                    }, 3000);
+                    if (input) {
+                        input.style.borderColor = '#e74c3c';
+                        
+                        // Reset border color after 3 seconds
+                        setTimeout(() => {
+                            input.style.borderColor = '#e0e0e0';
+                        }, 3000);
+                    }
                 } else {
                     input.style.borderColor = '#27ae60';
                 }
@@ -97,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Email validation
             const emailInput = this.querySelector('[name="email"]');
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(emailInput.value)) {
+            if (emailInput && !emailRegex.test(emailInput.value)) {
                 isValid = false;
                 emailInput.style.borderColor = '#e74c3c';
             }
@@ -105,20 +103,51 @@ document.addEventListener('DOMContentLoaded', function() {
             // Phone validation
             const phoneInput = this.querySelector('[name="phone"]');
             const phoneRegex = /^[0-9+\-\s\(\)]{10,}$/;
-            if (!phoneRegex.test(phoneInput.value)) {
+            if (phoneInput && !phoneRegex.test(phoneInput.value)) {
                 isValid = false;
                 phoneInput.style.borderColor = '#e74c3c';
             }
             
             if (isValid) {
-                // Show success message
-                showMessage('Thank you! Your message has been received. We will contact you soon at info@semanticssolutions.com.', 'success');
-                this.reset();
+                // Show loading message
+                showMessage('Sending your message...', 'info');
                 
-                // Note: In a real implementation, you would send this data to your server
-                // or use a service like Formspree, Netlify Forms, or EmailJS
-                // to send the email to info@semanticssolutions.com
-                console.log('Form data to be sent to info@semanticssolutions.com:', data);
+                // Submit to Formspree
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showMessage('Thank you! Your message has been sent successfully. We will contact you soon.', 'success');
+                        this.reset();
+                        // Reset all border colors
+                        requiredFields.forEach(field => {
+                            const input = this.querySelector(`[name="${field}"]`);
+                            if (input) input.style.borderColor = '#e0e0e0';
+                        });
+                        if (emailInput) emailInput.style.borderColor = '#e0e0e0';
+                        if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
+                    } else {
+                        response.json().then(data => {
+                            if (Object.hasOwnProperty.call(data, 'errors')) {
+                                showMessage('Oops! There was a problem submitting your form. Please try again.', 'error');
+                            } else {
+                                showMessage('Thank you! Your message has been sent successfully.', 'success');
+                                this.reset();
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    showMessage('Oops! There was a problem submitting your form. Please try again.', 'error');
+                    console.error('Form submission error:', error);
+                });
             } else {
                 showMessage('Please fill in all required fields correctly.', 'error');
             }
@@ -136,13 +165,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageDiv = document.createElement('div');
         messageDiv.className = `form-message ${type}`;
         messageDiv.innerHTML = message;
+        let backgroundColor, textColor, borderColor;
+        if (type === 'success') {
+            backgroundColor = '#d4edda';
+            textColor = '#155724';
+            borderColor = '#c3e6cb';
+        } else if (type === 'info') {
+            backgroundColor = '#d1ecf1';
+            textColor = '#0c5460';
+            borderColor = '#bee5eb';
+        } else {
+            backgroundColor = '#f8d7da';
+            textColor = '#721c24';
+            borderColor = '#f5c6cb';
+        }
+        
         messageDiv.style.cssText = `
             padding: 1rem;
             margin: 1rem 0;
             border-radius: 5px;
             text-align: center;
             font-weight: 600;
-            ${type === 'success' ? 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;' : 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'}
+            background: ${backgroundColor};
+            color: ${textColor};
+            border: 1px solid ${borderColor};
         `;
         
         const form = document.querySelector('.contact-form');
