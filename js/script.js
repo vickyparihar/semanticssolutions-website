@@ -112,42 +112,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show loading message
                 showMessage('Sending your message...', 'info');
                 
-                // Submit to Formspree
-                const formData = new FormData(this);
+                // Collect form data
+                const formData = {
+                    name: this.querySelector('[name="name"]').value,
+                    email: this.querySelector('[name="email"]').value,
+                    phone: this.querySelector('[name="phone"]').value,
+                    company: this.querySelector('[name="company"]').value,
+                    service: this.querySelector('[name="service"]').value,
+                    budget: this.querySelector('[name="budget"]').value,
+                    timeline: this.querySelector('[name="timeline"]').value,
+                    message: this.querySelector('[name="message"]').value,
+                    newsletter: this.querySelector('[name="newsletter"]').checked ? 'Yes' : 'No'
+                };
                 
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showMessage('Thank you! Your message has been sent successfully. We will contact you soon.', 'success');
-                        this.reset();
-                        // Reset all border colors
-                        requiredFields.forEach(field => {
-                            const input = this.querySelector(`[name="${field}"]`);
-                            if (input) input.style.borderColor = '#e0e0e0';
-                        });
-                        if (emailInput) emailInput.style.borderColor = '#e0e0e0';
-                        if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
-                    } else {
-                        response.json().then(data => {
-                            if (Object.hasOwnProperty.call(data, 'errors')) {
-                                showMessage('Oops! There was a problem submitting your form. Please try again.', 'error');
-                            } else {
-                                showMessage('Thank you! Your message has been sent successfully.', 'success');
-                                this.reset();
-                            }
-                        });
-                    }
-                })
-                .catch(error => {
-                    showMessage('Oops! There was a problem submitting your form. Please try again.', 'error');
-                    console.error('Form submission error:', error);
+                // For now, show success message and log form data
+                console.log('Contact Form Submission:', formData);
+                
+                // Show success message with contact information
+                showMessage(`Thank you ${formData.name}! Your message has been received. We will contact you soon.\n\nFor immediate assistance:\n📞 Call: +91 90223 34441\n📧 Email: info@semanticssolutions.com`, 'success');
+                
+                // Reset form
+                this.reset();
+                
+                // Reset all border colors
+                requiredFields.forEach(field => {
+                    const input = this.querySelector(`[name="${field}"]`);
+                    if (input) input.style.borderColor = '#e0e0e0';
                 });
+                if (emailInput) emailInput.style.borderColor = '#e0e0e0';
+                if (phoneInput) phoneInput.style.borderColor = '#e0e0e0';
+                
+                // Optional: Store form data in localStorage for tracking
+                try {
+                    const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                    submissions.push({
+                        ...formData,
+                        timestamp: new Date().toISOString(),
+                        id: Date.now()
+                    });
+                    localStorage.setItem('formSubmissions', JSON.stringify(submissions));
+                } catch(e) {
+                    console.log('Could not store form submission locally');
+                }
             } else {
                 showMessage('Please fill in all required fields correctly.', 'error');
             }

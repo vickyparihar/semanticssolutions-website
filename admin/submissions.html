@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submissions - Admin Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .submissions-list {
+            margin-top: 2rem;
+        }
+        
+        .submission-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .submission-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .submission-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .submission-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            color: #6c757d;
+        }
+        
+        .message-section {
+            grid-column: 1 / -1;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .no-submissions {
+            text-align: center;
+            color: #6c757d;
+            padding: 3rem;
+        }
+        
+        .clear-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        
+        .clear-btn:hover {
+            background: #c0392b;
+        }
+        
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            margin-left: 0.5rem;
+        }
+        
+        .export-btn:hover {
+            background: #219a52;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #3498db;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Form Submissions Dashboard</h1>
+            <p>Semantics Solutions Contact Form Data</p>
+        </div>
+        
+        <div class="content">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalSubmissions">0</div>
+                    <div>Total Submissions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="todaySubmissions">0</div>
+                    <div>Today's Submissions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="weekSubmissions">0</div>
+                    <div>This Week</div>
+                </div>
+            </div>
+            
+            <button class="clear-btn" onclick="clearSubmissions()">Clear All Data</button>
+            <button class="export-btn" onclick="exportSubmissions()">Export CSV</button>
+            
+            <div class="submissions-list" id="submissionsList">
+                <div class="no-submissions">
+                    <h3>No submissions found</h3>
+                    <p>Form submissions from your website will appear here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadSubmissions() {
+            try {
+                const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                displaySubmissions(submissions);
+                updateStats(submissions);
+            } catch (e) {
+                console.error('Error loading submissions:', e);
+            }
+        }
+        
+        function displaySubmissions(submissions) {
+            const container = document.getElementById('submissionsList');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                    <div class="no-submissions">
+                        <h3>No submissions found</h3>
+                        <p>Form submissions from your website will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort by newest first
+            submissions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            container.innerHTML = submissions.map(submission => `
+                <div class="submission-item">
+                    <div class="submission-header">
+                        <div class="submission-name">${submission.name}</div>
+                        <div class="submission-date">${new Date(submission.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="submission-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">${submission.email}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone</div>
+                            <div class="detail-value">${submission.phone}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Company</div>
+                            <div class="detail-value">${submission.company || 'Not specified'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Service</div>
+                            <div class="detail-value">${submission.service}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Budget</div>
+                            <div class="detail-value">${submission.budget || 'Not specified'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Timeline</div>
+                            <div class="detail-value">${submission.timeline || 'Not specified'}</div>
+                        </div>
+                        <div class="detail-item message-section">
+                            <div class="detail-label">Message</div>
+                            <div class="detail-value">${submission.message}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateStats(submissions) {
+            const total = submissions.length;
+            const today = new Date().toDateString();
+            const todayCount = submissions.filter(s => new Date(s.timestamp).toDateString() === today).length;
+            
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const weekCount = submissions.filter(s => new Date(s.timestamp) >= weekAgo).length;
+            
+            document.getElementById('totalSubmissions').textContent = total;
+            document.getElementById('todaySubmissions').textContent = todayCount;
+            document.getElementById('weekSubmissions').textContent = weekCount;
+        }
+        
+        function clearSubmissions() {
+            if (confirm('Are you sure you want to clear all submissions? This cannot be undone.')) {
+                localStorage.removeItem('formSubmissions');
+                loadSubmissions();
+            }
+        }
+        
+        function exportSubmissions() {
+            try {
+                const submissions = JSON.parse(localStorage.getItem('formSubmissions') || '[]');
+                if (submissions.length === 0) {
+                    alert('No submissions to export');
+                    return;
+                }
+                
+                const csv = [
+                    ['Name', 'Email', 'Phone', 'Company', 'Service', 'Budget', 'Timeline', 'Message', 'Newsletter', 'Date'],
+                    ...submissions.map(s => [
+                        s.name,
+                        s.email,
+                        s.phone,
+                        s.company || '',
+                        s.service,
+                        s.budget || '',
+                        s.timeline || '',
+                        s.message.replace(/\n/g, ' '),
+                        s.newsletter,
+                        new Date(s.timestamp).toLocaleString()
+                    ])
+                ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `form-submissions-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error('Error exporting submissions:', e);
+                alert('Error exporting data');
+            }
+        }
+        
+        // Load submissions on page load
+        loadSubmissions();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(loadSubmissions, 30000);
+    </script>
+</body>
+</html>
