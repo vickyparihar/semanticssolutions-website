@@ -317,13 +317,26 @@
 
     <script src="../js/script.js"></script>
 
-        <!-- Tawk.to Embed Script (keep your widget code here) -->
+        <!-- Tawk.to Embed Script -->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+        var s1=document.createElement("script"),
+        s0=document.getElementsByTagName("script")[0];
+        s1.async=true;
+        s1.src='https://embed.tawk.to/68beb8a467c586192c66b0a3/1j4kg2h8j';
+        s1.charset='UTF-8';
+        s1.setAttribute('crossorigin','*');
+        s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!-- End of Tawk.to Script -->
 
     <!-- Start Chat Button Script -->
     <script type="text/javascript">
         document.getElementById("startChatBtn").addEventListener("click", function(e) {
             e.preventDefault();
-            if (typeof Tawk_API !== "undefined") {
+            if (typeof Tawk_API !== "undefined" && Tawk_API.maximize) {
                 Tawk_API.maximize();
             } else {
                 alert("Chat is not loaded yet. Please try again.");
