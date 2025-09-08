@@ -222,7 +222,7 @@
                     <i class="fas fa-comments"></i>
                     <h3>Live Chat</h3>
                     <p>Chat with our support team</p>
-                    <a href="#" class="btn btn-secondary">Start Chat</a>
+                    <a href="#" id="startChatBtn" class="btn btn-secondary">Start Chat</a>
                 </div>
                 
                 <div class="quick-option">
@@ -316,5 +316,19 @@
     </footer>
 
     <script src="../js/script.js"></script>
+
+        <!-- Tawk.to Embed Script (keep your widget code here) -->
+
+    <!-- Start Chat Button Script -->
+    <script type="text/javascript">
+        document.getElementById("startChatBtn").addEventListener("click", function(e) {
+            e.preventDefault();
+            if (typeof Tawk_API !== "undefined") {
+                Tawk_API.maximize();
+            } else {
+                alert("Chat is not loaded yet. Please try again.");
+            }
+        });
+    </script>
 </body>
 </html>
